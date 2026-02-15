@@ -27,20 +27,17 @@ export async function addActivityAction(
     }
 
     const { data, error } = await supabase
-      .from("lead_activities")
-      .insert({
+    .from("lead_activities")
+    .insert([
+      {
         lead_id: leadId,
         type,
         description,
         created_by: user.id,
-      })
-      .select(
-        `
-        *,
-        user:users!lead_activities_created_by_fkey(name)
-        `
-      )
-      .single()
+      },
+    ])
+    .select()
+
 
     if (error) {
       console.error("ADD ACTIVITY DB ERROR:", error)
