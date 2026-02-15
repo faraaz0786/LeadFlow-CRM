@@ -137,11 +137,10 @@ export default async function AdminFollowupsPage() {
                 {f.status === "pending" && (
                   <div className="mt-4 flex gap-2">
                     <form
-                      action={updateFollowupStatusAction.bind(
-                        null,
-                        f.id,
-                        "done"
-                      )}
+                      action={async () => {
+                        "use server"
+                        await updateFollowupStatusAction(f.id, "done")
+                      }}
                     >
                       <button
                         type="submit"
@@ -152,12 +151,11 @@ export default async function AdminFollowupsPage() {
                     </form>
 
                     <form
-                      action={updateFollowupStatusAction.bind(
-                        null,
-                        f.id,
-                        "missed"
-                      )}
-                    >
+                        action={async () => {
+                          "use server"
+                          await updateFollowupStatusAction(f.id, "missed")
+                          }}
+                      >
                       <button
                         type="submit"
                         className="px-3 py-1 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
