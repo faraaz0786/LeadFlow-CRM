@@ -339,6 +339,14 @@ export async function getRepDashboardStats() {
 
   const now = new Date()
 
+  const leadsThisMonth = leads.filter((lead: any) => {
+    const created = new Date(lead.created_at)
+    return (
+      created.getMonth() === now.getMonth() &&
+      created.getFullYear() === now.getFullYear()
+    )
+  }).length
+
   const followupsDueToday = leads.reduce(
     (count: number, lead: any) => {
       if (
@@ -360,6 +368,7 @@ export async function getRepDashboardStats() {
     wonRevenue,
     conversionRate,
     followupsDueToday,
+    leadsThisMonth,
     stageCounts,
     leads,
   }
