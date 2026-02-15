@@ -1,36 +1,64 @@
-import { SupabaseClient } from '@supabase/supabase-js'
-import { Database } from '@/types/database.types'
+import { SupabaseClient } from "@supabase/supabase-js"
 
-export class BaseRepository<T extends keyof Database['public']['Tables']> {
-    table: T
-    supabase: SupabaseClient<Database>
+export class BaseRepository {
+  protected supabase: SupabaseClient
+  protected table: string
 
-    constructor(supabase: SupabaseClient<Database>, table: T) {
-        this.supabase = supabase
-        this.table = table
-    }
+  constructor(supabase: SupabaseClient, table: string) {
+    this.supabase = supabase
+    this.table = table
+  }
 
-    async getAll() {
-        return this.supabase.from(this.table).select('*')
-    }
+  async getAll() {
+    const { data, error } = await this.supabase
+      .from(this.table)
+      .select("*")
 
-    async getById(id: string) {
-        // Cast column name to satisfy TS check for generic table T
-        return this.supabase.from(this.table).select('*').eq('id' as any, id).single()
-    }
+    if (error) throw error
+    return data
+  }
 
-    // Use generic types that are slightly looser but compatible
-    async create(data: any) {
-        return this.supabase.from(this.table).insert(data).select().single()
-    }
+  async getById(id: string) {
+    const { data, error } = await this.supabase
+      .from(this.table)
+      .select("*")
+      .eq("id", id)
+      .single()
 
-    async update(id: string, data: any) {
-        // Cast column name
-        return this.supabase.from(this.table).update(data).eq('id' as any, id).select().single()
-    }
+    if (error) throw error
+    return data
+  }
 
-    async delete(id: string) {
-        // Cast column name
-        return this.supabase.from(this.table).delete().eq('id' as any, id)
-    }
+  async insert(payload: any) {
+    const { data, error } = await this.supabase
+      .from(this.table)
+      .insert(payload)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  async update(id: string, payload: any) {
+    const { data, error } = await this.supabase
+      .from(this.table)
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  }
+
+  async delete(id: string) {
+    const { error } = await this.supabase
+      .from(this.table)
+      .delete()
+      .eq("id", id)
+
+    if (error) throw error
+    return true
+  }
 }
