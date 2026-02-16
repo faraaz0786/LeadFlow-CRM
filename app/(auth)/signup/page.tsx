@@ -1,13 +1,13 @@
 import { Metadata } from "next"
 import Link from "next/link"
-import { LoginForm } from "@/components/forms/login-form"
+import { SignupForm } from "@/components/forms/signup-form"
 
 export const metadata: Metadata = {
-  title: "Login | LeadFlow CRM",
-  description: "Login to your account",
+  title: "Signup | LeadFlow CRM",
+  description: "Create your account",
 }
 
-export default function LoginPage() {
+export default function SignupPage() {
   return (
     <div className="container relative h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
@@ -30,9 +30,9 @@ export default function LoginPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              &ldquo;This CRM has completely transformed our sales process. The lead scoring and pipeline management are game changers.&rdquo;
+              &ldquo;My productivity skyrocketed after switching to LeadFlow. Best decision ever.&rdquo;
             </p>
-            <footer className="text-sm">Sofia Davis</footer>
+            <footer className="text-sm">Alex Chen</footer>
           </blockquote>
         </div>
       </div>
@@ -40,19 +40,19 @@ export default function LoginPage() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Login to your account
+              Create an account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your email below to access your dashboard
+              Enter your details below to create your account
             </p>
           </div>
-          <LoginForm />
+          <SignupForm />
           <p className="px-8 text-center text-sm text-muted-foreground">
             <Link
-              href="/auth/signup"
+              href="/login"
               className="hover:text-brand underline underline-offset-4"
             >
-              Don&apos;t have an account? Sign Up
+              Already have an account? Login
             </Link>
           </p>
         </div>

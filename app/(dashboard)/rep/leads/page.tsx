@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function RepLeadsPage() {
   const user = await getCurrentUser()
-  if (!user) redirect('/auth/login')
+  if (!user) redirect('/login')
 
   const leads = await getLeadsByRep(user.id)
 
