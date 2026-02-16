@@ -1,16 +1,29 @@
-import { getUser } from "@/lib/auth/session"
-import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
 
 export default async function AuthLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const user = await getUser()
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect("/admin/dashboard") // or role-aware later
+  if (!user) return <>{children}</>;
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role === "admin") {
+    redirect("/admin/dashboard");
+  } else {
+    redirect("/rep/dashboard");
   }
 
-  return <>{children}</>
+  return null;
 }
