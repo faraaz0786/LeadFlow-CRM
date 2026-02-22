@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase"
 import {
     LayoutDashboard,
     Users,
@@ -12,6 +13,7 @@ import {
     FileText,
     Settings,
 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 interface NavItem {
     label: string
@@ -68,24 +70,58 @@ interface AppSidebarProps {
 
 export function AppSidebar({ role = "admin", baseHref }: AppSidebarProps) {
     const pathname = usePathname()
+    const [displayName, setDisplayName] = useState("User")
+    const [displayRole, setDisplayRole] = useState<"admin" | "rep">(role)
 
     const filteredItems = navItems.filter(
         (item) => !item.adminOnly || role === "admin"
     )
 
+    useEffect(() => {
+        async function loadCurrentUser() {
+            const supabase = createClient()
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            if (!user) return
+
+            const nameFromMeta = (user.user_metadata?.name as string | undefined)?.trim()
+            const fallbackEmail = user.email?.trim()
+            setDisplayName(nameFromMeta || fallbackEmail || "User")
+
+            const roleFromMeta = user.app_metadata?.role
+            if (roleFromMeta === "admin" || roleFromMeta === "rep") {
+                setDisplayRole(roleFromMeta)
+            }
+        }
+
+        loadCurrentUser()
+    }, [])
+
+    const roleBadgeClassName = useMemo(
+        () =>
+            displayRole === "admin"
+                ? "bg-indigo-100 text-indigo-700"
+                : "bg-emerald-100 text-emerald-700",
+        [displayRole]
+    )
+
+    const avatarInitial = displayName.slice(0, 1).toUpperCase() || "U"
+
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-sm">
+        <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 flex flex-col">
             {/* Logo */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+            <div className="p-6 border-b border-slate-200">
                 <Link href={baseHref} className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-shadow">
-                        <Layers className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                        <Layers className="w-5 h-5 text-slate-700" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                        <h1 className="text-xl font-bold text-slate-900">
                             LeadFlow
                         </h1>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="text-xs text-slate-500">
                             {role === "admin" ? "Admin Portal" : "Sales Rep"}
                         </p>
                     </div>
@@ -104,10 +140,10 @@ export function AppSidebar({ role = "admin", baseHref }: AppSidebarProps) {
                             key={item.href}
                             href={fullHref}
                             className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                                "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-200",
                                 isActive
-                                    ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/30"
-                                    : "text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm"
+                                    ? "relative bg-blue-50 text-blue-600 font-medium before:content-[''] before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-blue-600"
+                                    : "text-slate-600 hover:bg-slate-50"
                             )}
                         >
                             <Icon className="w-5 h-5" />
@@ -118,19 +154,22 @@ export function AppSidebar({ role = "admin", baseHref }: AppSidebarProps) {
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 shadow-sm">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold">
-                        U
+            <div className="mt-auto border-t border-slate-200 p-4">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-medium">
+                        {avatarInitial}
                     </div>
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                            User
-                        </p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {role === "admin" ? "Administrator" : "Sales Representative"}
-                        </p>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium text-slate-900 truncate">
+                            {displayName}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                            {displayRole === "admin" ? "Administrator" : "Sales Rep"}
+                        </span>
                     </div>
+                    <span className={cn("ml-auto rounded-full px-2 py-1 text-[10px] font-medium", roleBadgeClassName)}>
+                        {displayRole === "admin" ? "Admin" : "Rep"}
+                    </span>
                 </div>
             </div>
         </aside>

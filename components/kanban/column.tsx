@@ -24,35 +24,33 @@ export function Column({ stage, leads }: ColumnProps) {
     return (
         <div
             ref={setNodeRef}
-            className={`flex flex-col w-[320px] min-w-[320px] rounded-2xl border transition-all duration-200 ${isOver
-                    ? "bg-indigo-50 dark:bg-indigo-950/20 border-indigo-300 dark:border-indigo-700 shadow-lg"
-                    : "bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800"
-                }`}
+            className={`flex flex-col gap-4 min-w-[320px] max-w-[320px] flex-shrink-0 bg-white border border-slate-200 rounded-2xl shadow-sm p-4 transition-all duration-200 ${
+                isOver ? "bg-blue-50 border-blue-300" : ""
+            }`}
         >
-            {/* Column Header */}
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 rounded-t-2xl">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+            <div className="border-b border-slate-100 pb-3 mb-3">
+                <div className="flex items-start justify-between">
+                    <h3 className="text-sm font-semibold text-slate-900">
                         {stage.name}
                     </h3>
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-xs font-bold text-indigo-700 dark:text-indigo-300">
-                        {leads.length}
-                    </span>
+                    <div className="flex flex-col items-end">
+                        <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                            {leads.length}
+                        </span>
+                        <p className="text-xs text-slate-500">
+                            ₹ {totalValue.toLocaleString()}
+                        </p>
+                    </div>
                 </div>
-
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    ₹ {totalValue.toLocaleString()}
-                </p>
             </div>
 
-            {/* Cards Container */}
-            <div className="flex flex-1 flex-col gap-3 p-4 overflow-y-auto min-h-[200px] max-h-[calc(100vh-300px)]">
+            <div className="flex flex-1 flex-col gap-4 overflow-y-auto min-h-[200px] max-h-[calc(100vh-300px)]">
                 {leads.map((lead) => (
                     <Card key={lead.id} lead={lead} />
                 ))}
 
                 {leads.length === 0 && (
-                    <div className="flex h-32 items-center justify-center text-sm text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                    <div className="border-2 border-dashed border-slate-200 rounded-lg min-h-[100px] flex items-center justify-center text-xs text-slate-400 hover:bg-blue-50/50 transition-colors duration-200">
                         Drop here
                     </div>
                 )}

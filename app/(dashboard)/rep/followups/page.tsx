@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell"
 import { createClient } from "@/lib/supabase-server"
-import { format } from "date-fns"
-import { updateFollowupStatusAction } from "@/app/actions/followups"
+import { RepFollowupsClient, type RepFollowupItem } from "./rep-followups-client"
 
 export default async function RepFollowupsPage() {
   const supabase = await createClient()
@@ -14,104 +13,46 @@ export default async function RepFollowupsPage() {
 
   const { data: followups } = await supabase
     .from("lead_followups")
-    .select("id, followup_at, status, note, lead:leads(name)")
+    .select(`
+      id,
+      followup_at,
+      status,
+      note,
+      lead:leads(
+        id,
+        name,
+        company,
+        stage:pipeline_stages!status(name)
+      )
+    `)
     .eq("created_by", user.id)
     .order("followup_at", { ascending: true })
 
-  const now = new Date()
+  const normalizedFollowups: RepFollowupItem[] = (followups ?? []).map((item: any) => {
+    const leadValue = Array.isArray(item.lead) ? item.lead[0] : item.lead
+    const stageValue = Array.isArray(leadValue?.stage)
+      ? leadValue.stage[0]
+      : leadValue?.stage
 
-  const overdue =
-    followups?.filter(
-      (f) =>
-        f.status === "pending" &&
-        new Date(f.followup_at) < now
-    ) || []
-
-  const today =
-    followups?.filter((f) => {
-      const d = new Date(f.followup_at)
-      return (
-        f.status === "pending" &&
-        d.toDateString() === now.toDateString()
-      )
-    }) || []
-
-  const upcoming =
-    followups?.filter(
-      (f) =>
-        f.status === "pending" &&
-        new Date(f.followup_at) > now
-    ) || []
-
-  function Section({
-    title,
-    items,
-  }: {
-    title: string
-    items: any[]
-  }) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">
-          {title} ({items.length})
-        </h2>
-
-        {items.map((f) => (
-          <div
-            key={f.id}
-            className="border rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-medium">
-                  {f.lead?.name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {f.note || "No note"}
-                </p>
-                <p className="text-xs mt-1">
-                  {format(
-                    new Date(f.followup_at),
-                    "PP p"
-                  )}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <form
-                  action={async () => {
-                    "use server"
-                    await updateFollowupStatusAction(
-                      f.id,
-                      "done"
-                    )
-                  }}
-                >
-                  <button className="text-xs px-3 py-1 bg-green-600 text-white rounded-lg">
-                    Done
-                  </button>
-                </form>
-
-                <form
-                  action={async () => {
-                    "use server"
-                    await updateFollowupStatusAction(
-                      f.id,
-                      "missed"
-                    )
-                  }}
-                >
-                  <button className="text-xs px-3 py-1 bg-red-600 text-white rounded-lg">
-                    Missed
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+    return {
+      id: item.id,
+      followup_at: item.followup_at,
+      status: item.status,
+      note: item.note ?? null,
+      lead: leadValue
+        ? {
+            id: leadValue.id,
+            name: leadValue.name ?? null,
+            company: leadValue.company ?? null,
+            stage: stageValue
+              ? {
+                  name: stageValue.name ?? null,
+                }
+              : null,
+          }
+        : null,
+    }
+  })
 
   return (
     <AppShell
@@ -120,11 +61,7 @@ export default async function RepFollowupsPage() {
       pageTitle="Follow-ups"
       pageSubtitle="Your scheduled actions"
     >
-      <div className="space-y-10">
-        <Section title="Overdue" items={overdue} />
-        <Section title="Today" items={today} />
-        <Section title="Upcoming" items={upcoming} />
-      </div>
+      <RepFollowupsClient followups={normalizedFollowups} />
     </AppShell>
   )
 }

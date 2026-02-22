@@ -16,7 +16,7 @@ export async function getUserOrRedirect() {
   const user = await getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/");
   }
 
   return user;
@@ -33,7 +33,7 @@ export async function getUserRoleOrRedirect() {
     .single();
 
   if (error || !data) {
-    redirect("/login");
+    redirect("/");
   }
 
   return {

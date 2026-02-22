@@ -32,15 +32,15 @@
 
 :root {
   /* Base - Soft neutral background */
-  --background: #fafbfc;
+  --background: #f8fafc;
   --foreground: #0f172a;
 
   /* Card surfaces */
   --card: #ffffff;
   --card-foreground: #0f172a;
 
-  /* Brand - Premium Indigo/Violet gradient system */
-  --primary: #4f46e5;
+  /* Brand - Minimal SaaS blue system */
+  --primary: #2563eb;
   --primary-foreground: #ffffff;
 
   /* Secondary - Soft slate */
@@ -52,8 +52,8 @@
   --muted-foreground: #64748b;
 
   /* Accent - Subtle highlight */
-  --accent: #eef2ff;
-  --accent-foreground: #4338ca;
+  --accent: #eff6ff;
+  --accent-foreground: #1d4ed8;
 
   /* Destructive - Soft red */
   --destructive: #ef4444;
@@ -62,7 +62,7 @@
   /* Borders - Subtle */
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #4f46e5;
+  --ring: #2563eb;
 
   /* Status colors - Professional palette */
   --success: #10b981;
@@ -70,7 +70,7 @@
   --info: #0ea5e9;
 
   /* Charts */
-  --chart-1: #4f46e5;
+  --chart-1: #2463eb;
   --chart-2: #0ea5e9;
   --chart-3: #10b981;
   --chart-4: #f59e0b;
@@ -118,18 +118,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Premium Card Styles */
+/* Card Styles */
 .card-premium {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-premium:hover {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Soft Elevation System */
@@ -138,28 +132,28 @@ body {
 }
 
 .elevation-md {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .elevation-lg {
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* Gradient Utilities */
 .gradient-primary {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: #2563eb;
 }
 
 .gradient-success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #10b981;
 }
 
 .gradient-warning {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: #f59e0b;
 }
 
 .gradient-danger {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #ef4444;
 }
 
 /* Glass Effect */
@@ -184,22 +178,18 @@ body {
 
 /* Custom Skeleton */
 .skeleton {
-  background: linear-gradient(90deg,
-      var(--muted) 0%,
-      var(--accent) 50%,
-      var(--muted) 100%);
-  background-size: 200% 100%;
+  background: var(--muted);
   animation: shimmer 2s infinite;
   border-radius: var(--radius);
 }
 
 @keyframes shimmer {
   0% {
-    background-position: 200% 0;
+    opacity: 0.75;
   }
 
   100% {
-    background-position: -200% 0;
+    opacity: 1;
   }
 }
 

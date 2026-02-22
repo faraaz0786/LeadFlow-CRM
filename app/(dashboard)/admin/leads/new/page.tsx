@@ -12,10 +12,15 @@ export default async function NewLeadPage() {
     const reps = await getReps()
 
     return (
-        <div className="container py-10 max-w-2xl">
-            <h1 className="text-3xl font-bold mb-8">Add New Lead</h1>
-            <div className="border rounded-lg p-6 bg-card">
-                <LeadForm stages={stages} reps={reps} />
+        <div className="bg-slate-100 min-h-screen px-8 py-10">
+            <div className="max-w-3xl mx-auto space-y-8">
+                <div className="mb-8">
+                    <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Add New Lead</h1>
+                    <p className="text-sm text-slate-500 mt-1">Create and assign a new lead</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] transition-shadow duration-200 p-6">
+                    <LeadForm stages={stages} reps={reps} />
+                </div>
             </div>
         </div>
     )

@@ -1,11 +1,16 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase-server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
-import { LoginInput, SignupInput } from "@/types/schema"
+import { LoginInput } from "@/types/schema"
+
+/* =======================================================
+   OTP RATE LIMIT (In-memory cooldown per email)
+   NOTE: In production, use Redis or DB-based throttling.
+======================================================= */
+const otpRequestMap = new Map<string, number>()
 
 /* =======================================================
    LOGIN
@@ -46,32 +51,76 @@ export async function login(data: LoginInput) {
 }
 
 /* =======================================================
-   SIGNUP
+   SEND OTP (STEP 1 - Triggers Confirm Email OTP)
 ======================================================= */
-export async function signup(data: SignupInput) {
+export async function sendSignupOtp(email: string) {
+  const now = Date.now()
+  const lastRequest = otpRequestMap.get(email)
+
+  // 60-second cooldown per email
+  if (lastRequest && now - lastRequest < 60_000) {
+    return { error: "Please wait before requesting another code." }
+  }
+
+  otpRequestMap.set(email, now)
+
   const supabase = await createClient()
 
-  const { data: authData, error: authError } =
-    await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { name: data.name },
-      },
-    })
+  const { error } = await supabase.auth.signUp({
+    email,
+    password: "temporary-password", // Required by Supabase
+  })
 
-  if (authError) return { error: authError.message }
-  if (!authData.user) return { error: "Signup failed." }
+  if (error) return { error: error.message }
 
-  const { error: dbError } = await supabase.from("users").insert({
-    id: authData.user.id,
-    name: data.name,
-    email: data.email,
+  return { success: true }
+}
+
+/* =======================================================
+   VERIFY OTP + COMPLETE ACCOUNT (STEP 2)
+======================================================= */
+export async function completeSignup({
+  email,
+  token,
+  password,
+  name,
+}: {
+  email: string
+  token: string
+  password: string
+  name: string
+}) {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "signup", // Must be "signup" for confirm email flow
+  })
+
+  if (error) return { error: error.message }
+  if (!data.user) return { error: "Invalid OTP." }
+
+  // Set real password after verification
+  const { error: passError } = await supabase.auth.updateUser({
+    password,
+  })
+
+  if (passError) return { error: passError.message }
+
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { error: dbError } = await adminClient.from("users").insert({
+    id: data.user.id,
+    name,
+    email,
     role: "rep",
   })
 
-  if (dbError)
-    return { error: "Failed to create user profile." }
+  if (dbError) return { error: dbError.message }
 
   revalidatePath("/", "layout")
   redirect("/rep/dashboard")
@@ -80,33 +129,8 @@ export async function signup(data: SignupInput) {
 /* =======================================================
    LOGOUT
 ======================================================= */
-export async function logout(): Promise<void> {
+export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-
-  const cookieStore = await cookies()
-
-  cookieStore.getAll().forEach((cookie) => {
-    if (cookie.name.startsWith("sb-")) {
-      cookieStore.delete(cookie.name)
-    }
-  })
-
-  revalidatePath("/", "layout")
-  redirect("/login")
-}
-
-/* =======================================================
-   UPDATE PASSWORD (After Reset Link)
-======================================================= */
-export async function updatePassword(newPassword: string) {
-  const supabase = await createClient()
-
-  const { error } = await supabase.auth.updateUser({
-    password: newPassword,
-  })
-
-  if (error) return { error: error.message }
-
-  redirect("/login")
+  redirect("/")
 }

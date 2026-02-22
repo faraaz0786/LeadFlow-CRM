@@ -31,10 +31,6 @@ export default async function AdminFollowupsPage() {
   const followups = data ?? []
   const now = new Date()
 
-  /* ===========================
-     STATUS BUCKETS
-  ============================ */
-
   const overdue = followups.filter(
     (f: any) =>
       f.status === "pending" &&
@@ -63,64 +59,57 @@ export default async function AdminFollowupsPage() {
     (f: any) => f.status === "missed"
   )
 
-  /* ===========================
-     STATUS BADGE
-  ============================ */
-
   function getStatusBadge(status: string) {
     switch (status) {
       case "pending":
-        return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+        return "bg-amber-100 text-amber-700"
       case "done":
-        return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+        return "bg-emerald-100 text-emerald-700"
       case "missed":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+        return "bg-red-100 text-red-700"
       default:
-        return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+        return "bg-slate-100 text-slate-700"
     }
   }
-
-  /* ===========================
-     SECTION COMPONENT
-  ============================ */
 
   function Section({
     title,
     items,
-    color,
   }: {
     title: string
     items: any[]
-    color: string
   }) {
     return (
       <div className="space-y-4">
-        <h2 className={`text-lg font-semibold ${color}`}>
-          {title} ({items.length})
-        </h2>
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">
+            {title} ({items.length})
+          </h2>
+          <p className="text-sm text-slate-500">Follow-up tasks in this status bucket.</p>
+        </div>
 
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-6 text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 text-sm text-slate-500">
             No follow-ups.
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {items.map((f: any) => (
               <div
                 key={f.id}
-                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-[0_10px_40px_rgba(0,0,0,0.04)]"
+                className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">
+                    <p className="text-sm text-slate-700 font-medium">
                       {f.lead?.name}
                     </p>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500">
                       {f.note || "No note"}
                     </p>
                   </div>
 
-                  <div className="text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap text-right">
+                  <div className="text-xs text-slate-500 whitespace-nowrap text-right">
                     <div>
                       {format(new Date(f.followup_at), "PP p")}
                     </div>
@@ -135,7 +124,7 @@ export default async function AdminFollowupsPage() {
                 </div>
 
                 {f.status === "pending" && (
-                  <div className="mt-4 flex gap-2">
+                  <div className="flex gap-2">
                     <form
                       action={async () => {
                         "use server"
@@ -144,21 +133,21 @@ export default async function AdminFollowupsPage() {
                     >
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition"
+                        className="px-3 py-1 text-xs rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                       >
                         Mark Done
                       </button>
                     </form>
 
                     <form
-                        action={async () => {
-                          "use server"
-                          await updateFollowupStatusAction(f.id, "missed")
-                          }}
-                      >
+                      action={async () => {
+                        "use server"
+                        await updateFollowupStatusAction(f.id, "missed")
+                      }}
+                    >
                       <button
                         type="submit"
-                        className="px-3 py-1 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+                        className="px-3 py-1 text-xs rounded-md bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
                       >
                         Mark Missed
                       </button>
@@ -166,7 +155,7 @@ export default async function AdminFollowupsPage() {
                   </div>
                 )}
 
-                <div className="mt-3 text-xs text-slate-500">
+                <div className="text-xs text-slate-500">
                   Created by: {f.rep?.name || "Unknown"}
                 </div>
               </div>
@@ -177,10 +166,6 @@ export default async function AdminFollowupsPage() {
     )
   }
 
-  /* ===========================
-     PAGE RENDER
-  ============================ */
-
   return (
     <AppShell
       role="admin"
@@ -188,12 +173,12 @@ export default async function AdminFollowupsPage() {
       pageTitle="Follow-ups"
       pageSubtitle="Track scheduled actions"
     >
-      <div className="space-y-12">
-        <Section title="Overdue" items={overdue} color="text-red-600" />
-        <Section title="Today" items={today} color="text-amber-600" />
-        <Section title="Upcoming" items={upcoming} color="text-indigo-600" />
-        <Section title="Completed" items={completed} color="text-emerald-600" />
-        <Section title="Missed" items={missed} color="text-red-500" />
+      <div className="space-y-8">
+        <Section title="Overdue" items={overdue} />
+        <Section title="Today" items={today} />
+        <Section title="Upcoming" items={upcoming} />
+        <Section title="Completed" items={completed} />
+        <Section title="Missed" items={missed} />
       </div>
     </AppShell>
   )

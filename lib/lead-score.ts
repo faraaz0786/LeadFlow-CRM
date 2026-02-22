@@ -1,39 +1,109 @@
-/**
- * Calculate Lead Score based on PRD logic.
- * 
- * | Condition | Points |
- * | --- | --- |
- * | Has Email | +20 |
- * | Has Phone | +20 |
- * | Has Company | +20 |
- * | High quality source | +20 | (LinkedIn, Referral)
- * | Advanced stage | +20 | (Proposal, Negotiation, Closed Won)
- */
+// /lib/lead-score.ts
 
-interface LeadScoreProps {
-    email?: string | null;
-    phone?: string | null;
-    company?: string | null;
-    source?: string | null;
-    stageName?: string | null;
-}
-
-export function calculateLeadScore(lead: LeadScoreProps): number {
-    let score = 0;
-
-    if (lead.email) score += 20;
-    if (lead.phone) score += 20;
-    if (lead.company) score += 20;
-
-    const highQualitySources = ['LinkedIn', 'Referral', 'linkedin', 'referral', 'Direct'];
-    if (lead.source && highQualitySources.some(s => lead.source!.toLowerCase().includes(s.toLowerCase()))) {
-        score += 20;
+export interface LeadScoringInput {
+    email?: string | null
+    phone?: string | null
+    company?: string | null
+    source?: string | null
+    stageName?: string | null
+  }
+  
+  export type LeadLevel = "hot" | "warm" | "cold"
+  
+  export interface LeadScoreResult {
+    score: number
+    level: LeadLevel
+    reasons: string[]
+  }
+  
+  const SOURCE_WEIGHTS: Record<string, number> = {
+    linkedin: 15,
+    website: 12,
+    referral: 20,
+    cold_call: 5,
+    other: 8,
+  }
+  
+  const STAGE_WEIGHTS: Record<string, number> = {
+    new: 5,
+    contacted: 10,
+    qualified: 20,
+    proposal: 25,
+    negotiation: 30,
+  }
+  
+  export function calculateLeadScore(
+    input: LeadScoringInput
+  ): LeadScoreResult {
+    let score = 0
+    const reasons: string[] = []
+  
+    const normalizedStage =
+      input.stageName?.toLowerCase().trim() ?? ""
+  
+    // Hard rules
+    if (normalizedStage === "won") {
+      return {
+        score: 100,
+        level: "hot",
+        reasons: ["Lead marked as Won"],
+      }
     }
-
-    const advancedStages = ['Proposal Sent', 'Negotiation', 'Closed Won'];
-    if (lead.stageName && advancedStages.includes(lead.stageName)) {
-        score += 20;
+  
+    if (normalizedStage === "lost") {
+      return {
+        score: 0,
+        level: "cold",
+        reasons: ["Lead marked as Lost"],
+      }
     }
-
-    return Math.min(score, 100);
-}
+  
+    if (input.email) {
+      score += 15
+      reasons.push("Has email (+15)")
+    }
+  
+    if (input.phone) {
+      score += 15
+      reasons.push("Has phone (+15)")
+    }
+  
+    if (input.company) {
+      score += 10
+      reasons.push("Has company (+10)")
+    }
+  
+    if (input.source) {
+      const normalizedSource =
+        input.source.toLowerCase().trim()
+  
+      const sourceScore =
+        SOURCE_WEIGHTS[normalizedSource] ??
+        SOURCE_WEIGHTS["other"]
+  
+      score += sourceScore
+      reasons.push(`Source quality (+${sourceScore})`)
+    }
+  
+    if (normalizedStage) {
+      const stageScore =
+        STAGE_WEIGHTS[normalizedStage] ?? 0
+  
+      score += stageScore
+      reasons.push(`Stage strength (+${stageScore})`)
+    }
+  
+    if (score > 100) score = 100
+  
+    let level: LeadLevel = "cold"
+  
+    if (score >= 80) level = "hot"
+    else if (score >= 50) level = "warm"
+  
+    return {
+      score,
+      level,
+      reasons,
+    }
+  }
+  

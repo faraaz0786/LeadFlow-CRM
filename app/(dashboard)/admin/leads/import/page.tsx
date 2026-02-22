@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { AppShell } from "@/components/layout/app-shell"
-import { UploadCloud, FileText, Loader2 } from "lucide-react"
+import { UploadCloud, Loader2 } from "lucide-react"
 
 interface ImportResult {
   created: number
@@ -54,24 +54,23 @@ export default function AdminImportPage() {
       pageSubtitle="Upload CSV to bulk import leads"
     >
       <div className="max-w-3xl space-y-8">
-        {/* Upload Card */}
-        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
+        <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm">
           <div className="flex flex-col items-center text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <UploadCloud className="w-7 h-7 text-white" />
+            <div className="w-14 h-14 rounded-xl bg-slate-100 flex items-center justify-center">
+              <UploadCloud className="w-6 h-6 text-slate-600" />
             </div>
 
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-slate-900">
                 Upload CSV File
               </h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-slate-500">
                 Required headers: name, email, phone, company, location,
                 source, expected_value, status
               </p>
             </div>
 
-            <label className="w-full mt-4 cursor-pointer">
+            <label className="w-full cursor-pointer">
               <input
                 type="file"
                 accept=".csv"
@@ -80,8 +79,8 @@ export default function AdminImportPage() {
                   setFile(e.target.files ? e.target.files[0] : null)
                 }
               />
-              <div className="w-full border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 hover:border-indigo-500 transition-colors">
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+              <div className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 hover:bg-slate-50 transition-colors">
+                <p className="text-sm text-slate-500">
                   {file ? file.name : "Click to select CSV file"}
                 </p>
               </div>
@@ -90,19 +89,18 @@ export default function AdminImportPage() {
             <button
               onClick={handleImport}
               disabled={!file || loading}
-              className="mt-4 px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-white font-medium shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-2.5 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? "Importing..." : "Start Import"}
             </button>
 
             {error && (
-              <p className="text-sm text-red-500 mt-2">{error}</p>
+              <p className="text-sm text-red-500">{error}</p>
             )}
           </div>
         </div>
 
-        {/* Result Summary */}
         {result && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -124,24 +122,24 @@ export default function AdminImportPage() {
             </div>
 
             {result.errors.length > 0 && (
-              <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-                <h3 className="font-semibold mb-4 text-slate-900 dark:text-slate-100">
+              <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm space-y-4">
+                <h3 className="text-base font-semibold text-slate-900">
                   Error Details
                 </h3>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-slate-500 border-b">
+                      <tr className="text-left text-xs uppercase tracking-wide text-slate-400 border-b border-slate-200">
                         <th className="py-2 pr-4">Row</th>
                         <th className="py-2">Message</th>
                       </tr>
                     </thead>
                     <tbody>
                       {result.errors.map((e, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="py-2 pr-4">{e.row}</td>
-                          <td className="py-2 text-red-500">
+                        <tr key={idx} className="border-b border-slate-200 last:border-0">
+                          <td className="py-2 pr-4 text-sm text-slate-700">{e.row}</td>
+                          <td className="py-2 text-sm text-red-500">
                             {e.message}
                           </td>
                         </tr>
@@ -168,7 +166,7 @@ function SummaryCard({
   color: string
 }) {
   return (
-    <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+    <div className="rounded-xl bg-white border border-slate-200 p-6 shadow-sm">
       <p className="text-sm text-slate-500">{label}</p>
       <p className={`text-3xl font-bold mt-2 ${color}`}>
         {value}

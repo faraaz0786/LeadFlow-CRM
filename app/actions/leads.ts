@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase-server"
 import { leadSchema } from "@/types/schema"
-import { calculateLeadScore } from "@/lib/ai/lead-scoring"
+import { calculateLeadScore } from "@/lib/lead-score"
+import { supabaseAdmin } from "@/lib/supabase-admin"
 
 export interface LeadResponse {
   success: boolean
@@ -65,9 +66,10 @@ export async function createLeadAction(
       phone: parsed.data.phone,
       company: parsed.data.company,
       source: parsed.data.source,
-      status: parsed.data.status,
+      stageName: parsed.data.status,
     })
 
+    // 1️⃣ Insert Lead using normal RLS client
     const { data, error } = await supabase
       .from("leads")
       .insert({
@@ -82,12 +84,31 @@ export async function createLeadAction(
         expected_value: parsed.data.expected_value,
         created_by: user.id,
         ai_score: scoring.score,
-        ai_score_reason: scoring.reason,
+        ai_score_reason: scoring.reasons.join(", "),
       })
       .select()
       .single()
 
     if (error) throw error
+
+    // 2️⃣ Insert Notification using SERVICE ROLE (bypass RLS safely)
+    if (parsed.data.assigned_rep_id) {
+      const { error: notifError } = await supabaseAdmin
+        .from("notifications")
+        .insert({
+          user_id: parsed.data.assigned_rep_id,
+          entity_id: data.id,
+          entity_type: "lead",
+          type: "lead",
+          title: "New Lead Assigned",
+          message: `${parsed.data.name} has been assigned to you.`,
+          is_read: false,
+        })
+
+      if (notifError) {
+        console.error("Notification insert failed:", notifError)
+      }
+    }
 
     revalidatePath("/admin/leads")
 
@@ -145,7 +166,7 @@ export async function updateLeadAction(
       phone: parsed.data.phone,
       company: parsed.data.company,
       source: parsed.data.source,
-      status: parsed.data.status,
+      stageName: parsed.data.status,
     })
 
     const { data, error } = await supabase
@@ -162,7 +183,7 @@ export async function updateLeadAction(
         expected_value: parsed.data.expected_value,
         updated_at: new Date().toISOString(),
         ai_score: scoring.score,
-        ai_score_reason: scoring.reason,
+        ai_score_reason: scoring.reasons.join(", "),
       })
       .eq("id", leadId)
       .select()
@@ -203,53 +224,29 @@ export async function updateLeadStatusAction(
 
     if (fetchError || !existing) throw fetchError
 
-    /* 2️⃣ Get stage info */
+    /* 2️⃣ Get stage name */
     const { data: stage } = await supabase
       .from("pipeline_stages")
-      .select("name, default_probability")
+      .select("name")
       .eq("id", newStageId)
       .single()
 
-    /* 3️⃣ Recalculate score */
-    let score = 0
-    const reasons: string[] = []
-
-    if (existing.email) {
-      score += 15
-      reasons.push("Has email (+15)")
-    }
-
-    if (existing.phone) {
-      score += 10
-      reasons.push("Has phone (+10)")
-    }
-
-    if (existing.company) {
-      score += 10
-      reasons.push("Has company (+10)")
-    }
-
-    if (existing.source === "LinkedIn") {
-      score += 15
-      reasons.push("High-quality source LinkedIn (+15)")
-    }
-
-    if (stage?.default_probability) {
-      score += stage.default_probability
-      reasons.push(
-        `Stage weight (${stage.name}) +${stage.default_probability}`
-      )
-    }
-
-    if (score > 100) score = 100
+    /* 3️⃣ Recalculate using central engine */
+    const scoring = calculateLeadScore({
+      email: existing.email,
+      phone: existing.phone,
+      company: existing.company,
+      source: existing.source,
+      stageName: stage?.name,
+    })
 
     /* 4️⃣ Update lead */
     const { error } = await supabase
       .from("leads")
       .update({
         status: newStageId,
-        ai_score: score,
-        ai_score_reason: reasons.join(", "),
+        ai_score: scoring.score,
+        ai_score_reason: scoring.reasons.join(", "),
         updated_at: new Date().toISOString(),
       })
       .eq("id", leadId)

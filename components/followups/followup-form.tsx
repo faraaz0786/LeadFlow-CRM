@@ -15,11 +15,7 @@ export function FollowupForm({ leadId }: { leadId: string }) {
 
     setLoading(true)
 
-    const result = await createFollowupAction(
-      leadId,
-      date,
-      note
-    )
+    const result = await createFollowupAction(leadId, date)
 
     if (result.success) {
       toast.success("Follow-up scheduled")
@@ -33,8 +29,8 @@ export function FollowupForm({ leadId }: { leadId: string }) {
   }
 
   return (
-    <div className="space-y-3 border rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm">
-      <h3 className="text-sm font-semibold">
+    <div className="space-y-4 rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+      <h3 className="text-base font-semibold text-slate-900">
         Schedule Follow-up
       </h3>
 
@@ -42,14 +38,14 @@ export function FollowupForm({ leadId }: { leadId: string }) {
         type="datetime-local"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+        className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm bg-white text-slate-700"
       />
 
       <textarea
         placeholder="Optional note..."
         value={note}
         onChange={(e) => setNote(e.target.value)}
-        className="w-full border rounded-lg px-3 py-2 text-sm bg-background"
+        className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm bg-white text-slate-700"
       />
 
       <div className="flex justify-end">

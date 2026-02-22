@@ -42,29 +42,41 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-      <input
-        type="password"
-        required
-        placeholder="New password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full p-2 border rounded-md"
-      />
+    <form onSubmit={handleSubmit} className="max-w-md space-y-5">
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="new-password">
+          New Password
+        </label>
+        <input
+          id="new-password"
+          type="password"
+          required
+          placeholder="Enter new password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+        />
+      </div>
 
-      <input
-        type="password"
-        required
-        placeholder="Confirm password"
-        value={confirm}
-        onChange={(e) => setConfirm(e.target.value)}
-        className="w-full p-2 border rounded-md"
-      />
+      <div className="flex flex-col gap-2">
+        <label className="text-sm font-medium text-slate-700" htmlFor="confirm-password">
+          Confirm Password
+        </label>
+        <input
+          id="confirm-password"
+          type="password"
+          required
+          placeholder="Confirm new password"
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className="h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+        />
+      </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary text-white p-2 rounded-md"
+        className="w-full h-11 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition shadow-sm"
       >
         {loading ? "Updating..." : "Change Password"}
       </button>

@@ -30,40 +30,43 @@ export default async function AdminSettingsPage() {
       pageTitle="Settings"
       pageSubtitle="Manage system settings"
     >
-      <div className="grid gap-10">
+      <div className="space-y-8">
 
         {/* ===========================
            PIPELINE STAGES SECTION
         ============================ */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Pipeline Stages</h2>
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Pipeline Stages</h2>
+            <p className="text-sm text-slate-500">Manage the order and names of sales stages.</p>
+          </div>
 
           <form
             action={createStage}
-            className="rounded-2xl border p-6 space-y-4 bg-white dark:bg-slate-900"
+            className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4"
           >
             <input
               name="name"
               placeholder="Stage Name"
               required
-              className="w-full px-4 py-2 rounded-xl border"
+              className="w-full px-4 py-2 rounded-md border border-slate-200 text-sm text-slate-700"
             />
             <input
               name="order"
               type="number"
               placeholder="Stage Order"
               required
-              className="w-full px-4 py-2 rounded-xl border"
+              className="w-full px-4 py-2 rounded-md border border-slate-200 text-sm text-slate-700"
             />
-            <button className="px-4 py-2 rounded-xl bg-indigo-600 text-white">
+            <button className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors">
               Add Stage
             </button>
           </form>
 
-          <div className="rounded-2xl border p-6 bg-white dark:bg-slate-900">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
             {stages?.map((s) => (
-              <div key={s.id} className="border-b py-4 last:border-none">
-                <p className="font-medium">
+              <div key={s.id} className="border-b border-slate-200 py-4 last:border-none">
+                <p className="text-sm text-slate-700 font-medium">
                   {s.stage_order}. {s.name}
                 </p>
               </div>
@@ -74,12 +77,13 @@ export default async function AdminSettingsPage() {
         {/* ===========================
            PASSWORD SECTION
         ============================ */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Security</h2>
-
-          <div className="rounded-2xl border p-6 bg-white dark:bg-slate-900">
-            <ChangePasswordForm />
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-[0_1px_2px_rgba(16,24,40,0.04),0_1px_3px_rgba(16,24,40,0.08)] p-8 space-y-6">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-slate-900">Security</h2>
+            <p className="text-sm text-slate-500">Update account access and password settings.</p>
           </div>
+
+          <ChangePasswordForm />
         </div>
 
       </div>

@@ -1,118 +1,95 @@
 import { Metadata } from "next"
-import { getLeads, getPipelineStages } from "@/lib/data"
-import { AdminDashboardClient } from "@/components/dashboard/admin-dashboard-client"
 import { AppShell } from "@/components/layout/app-shell"
+import { AdminDashboardClient } from "@/components/dashboard/admin-dashboard-client"
+import { getDashboardStats } from "@/lib/data"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | LeadFlow CRM",
-  description: "Overview of sales performance",
+  description: "CRM system overview",
 }
 
 export default async function AdminDashboardPage() {
-  const [leads, stages] = await Promise.all([
-    getLeads(),
-    getPipelineStages(),
-  ])
+  const stats = await getDashboardStats()
 
-  /* ===========================
-     KPI CALCULATIONS
-  ============================ */
+  const totalLeads = stats.totalLeads
+  const totalValue = stats.totalValue
+  const wonRevenue = stats.wonRevenue
+  const conversionRate = stats.conversionRate
+  const averageScore = stats.averageScore
+  const overdueFollowups = stats.overdueFollowups
 
-  const totalLeads = leads.length
+  // Leads by stage
+  const stageCounts: Record<string, number> = {}
 
-  const totalValue = leads.reduce(
-    (sum, lead) => sum + (lead.expected_value || 0),
-    0
+  stats.leads.forEach((lead: any) => {
+    const stageName = lead.stage?.name || "Unknown"
+    stageCounts[stageName] = (stageCounts[stageName] || 0) + 1
+  })
+
+  const leadsByStage = Object.entries(stageCounts).map(
+    ([name, count]) => ({
+      name,
+      count,
+    })
   )
 
-  const currentMonth = new Date().getMonth()
-  const currentYear = new Date().getFullYear()
+  // Top reps aggregation
+  const repMap = new Map()
 
-  const leadsThisMonth = leads.filter((lead) => {
-    if (!lead.created_at) return false
-    const date = new Date(lead.created_at)
-    return (
-      date.getMonth() === currentMonth &&
-      date.getFullYear() === currentYear
-    )
-  }).length
+  stats.leads.forEach((lead: any) => {
+    if (!lead.assigned_rep?.id) return
 
-  const wonStage = stages.find(
-    (s) => s.name.toLowerCase() === "won"
-  )
+    const repId = lead.assigned_rep.id
 
-  const wonRevenue = leads
-    .filter((l) => l.status === wonStage?.id)
-    .reduce(
-      (sum, l) => sum + (l.expected_value || 0),
-      0
-    )
+    if (!repMap.has(repId)) {
+      repMap.set(repId, {
+        id: repId,
+        name: lead.assigned_rep.name,
+        total: 0,
+        won: 0,
+        revenue: 0,
+      })
+    }
 
-  /* ===========================
-     STAGE DISTRIBUTION
-  ============================ */
+    const rep = repMap.get(repId)
+    rep.total += 1
 
-  const leadsByStage = stages.map((stage) => {
-    const stageLeads = leads.filter(
-      (l) => l.status === stage.id
-    )
-
-    return {
-      name: stage.name,
-      count: stageLeads.length,
-      value: stageLeads.reduce(
-        (sum, l) => sum + (l.expected_value || 0),
-        0
-      ),
+    if (lead.stage?.name === "Won") {
+      rep.won += 1
+      rep.revenue += lead.expected_value || 0
     }
   })
 
-  /* ===========================
-     MONTHLY TREND (Last 6 Months)
-  ============================ */
+  const topReps = Array.from(repMap.values())
+    .map((r) => ({
+      ...r,
+      conversion:
+        r.total > 0
+          ? Math.round((r.won / r.total) * 100)
+          : 0,
+    }))
+    .sort((a, b) => b.won - a.won)
+    .slice(0, 5)
 
-  const monthlyTrend = Array.from({ length: 6 }).map(
-    (_, i) => {
-      const date = new Date()
-      date.setMonth(date.getMonth() - (5 - i))
-
-      const month = date.getMonth()
-      const year = date.getFullYear()
-
-      const monthLeads = leads.filter((lead) => {
-        if (!lead.created_at) return false
-        const created = new Date(
-          lead.created_at
-        )
-        return (
-          created.getMonth() === month &&
-          created.getFullYear() === year
-        )
-      })
-
-      return {
-        name: date.toLocaleString("default", {
-          month: "short",
-        }),
-        leads: monthLeads.length,
-      }
-    }
-  )
+  const recentLeads = stats.leads.slice(0, 5)
 
   return (
     <AppShell
       role="admin"
       baseHref="/admin"
       pageTitle="Dashboard"
-      pageSubtitle="Sales performance overview"
+      pageSubtitle="System overview and performance"
     >
       <AdminDashboardClient
         totalLeads={totalLeads}
         totalValue={totalValue}
-        leadsThisMonth={leadsThisMonth}
         wonRevenue={wonRevenue}
-        leadsByStage={leadsByStage}
-        monthlyTrend={monthlyTrend}
+        conversionRate={conversionRate}
+        averageScore={averageScore}
+        overdueFollowups={overdueFollowups}
+        leadsByStage ={leadsByStage}
+        topReps={topReps}
+        recentLeads={recentLeads}
       />
     </AppShell>
   )

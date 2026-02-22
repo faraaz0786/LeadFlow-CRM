@@ -59,6 +59,49 @@ function enrichLeads(data: any[]) {
 }
 
 /* ===========================
+   PIPELINE DATA (KANBAN)
+=========================== */
+
+export async function getPipelineData() {
+  const supabase = await getSupabaseClient()
+
+  // Fetch stages
+  const { data: stages, error: stageError } = await supabase
+    .from("pipeline_stages")
+    .select("*")
+    .order("stage_order", { ascending: true })
+
+  if (stageError) {
+    console.error("GET PIPELINE STAGES ERROR:", stageError)
+    throw new Error("Failed to fetch pipeline stages")
+  }
+
+  // Fetch leads with stage + rep relation
+  const { data: leads, error: leadError } = await supabase
+    .from("leads")
+    .select(`
+      *,
+      assigned_rep:users!leads_assigned_rep_id_fkey(id, name),
+      stage:pipeline_stages!status(id, name, stage_order),
+      followups:lead_followups!lead_followups_lead_id_fkey(
+        id,
+        followup_at,
+        status
+      )
+    `)
+
+  if (leadError) {
+    console.error("GET PIPELINE LEADS ERROR:", leadError)
+    throw new Error("Failed to fetch pipeline leads")
+  }
+
+  return {
+    leads: enrichLeads(leads || []),
+    stages: stages || [],
+  }
+}
+
+/* ===========================
    GET ALL LEADS (ADMIN)
 =========================== */
 
@@ -306,69 +349,87 @@ export async function getRepDashboardStats() {
 
   const leads = await getLeadsByRep(user.id)
 
-  const totalLeads = leads.length
-
-  const pipelineValue = leads.reduce(
-    (sum: number, lead: any) =>
-      sum + (lead.expected_value || 0),
-    0
-  )
-
-  const wonDeals = leads.filter(
-    (lead: any) => lead.stage?.name === "Won"
-  )
-
-  const wonRevenue = wonDeals.reduce(
-    (sum: number, lead: any) =>
-      sum + (lead.expected_value || 0),
-    0
-  )
-
+  const totalAssignedLeads = leads.length
+  const wonDeals = leads.filter((lead: any) => lead.stage?.name === "Won").length
   const conversionRate =
-    totalLeads > 0
-      ? Math.round((wonDeals.length / totalLeads) * 100)
+    totalAssignedLeads > 0
+      ? Math.round((wonDeals / totalAssignedLeads) * 100)
       : 0
 
   const stageCounts: Record<string, number> = {}
 
   leads.forEach((lead: any) => {
     const stageName = lead.stage?.name || "Unknown"
-    stageCounts[stageName] =
-      (stageCounts[stageName] || 0) + 1
+    stageCounts[stageName] = (stageCounts[stageName] || 0) + 1
   })
 
   const now = new Date()
-
-  const leadsThisMonth = leads.filter((lead: any) => {
-    const created = new Date(lead.created_at)
-    return (
-      created.getMonth() === now.getMonth() &&
-      created.getFullYear() === now.getFullYear()
-    )
-  }).length
-
-  const followupsDueToday = leads.reduce(
-    (count: number, lead: any) => {
-      if (
-        lead.next_followup &&
-        lead.next_followup.status === "pending" &&
-        new Date(lead.next_followup.followup_at).toDateString() ===
-          now.toDateString()
-      ) {
-        return count + 1
-      }
-      return count
-    },
-    0
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const endOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999
+  )
+  const startOfTomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1
+  )
+  const endOfUpcomingWindow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 7,
+    23,
+    59,
+    59,
+    999
   )
 
+  const isPendingFollowup = (lead: any) =>
+    lead.next_followup && lead.next_followup.status === "pending"
+
+  const followupsDueToday = leads.reduce((count: number, lead: any) => {
+    if (!isPendingFollowup(lead)) return count
+
+    const followupDate = new Date(lead.next_followup.followup_at)
+    if (Number.isNaN(followupDate.getTime())) return count
+
+    return followupDate.toDateString() === now.toDateString()
+      ? count + 1
+      : count
+  }, 0)
+
+  const overdueFollowups = leads.reduce((count: number, lead: any) => {
+    if (!isPendingFollowup(lead)) return count
+
+    const followupDate = new Date(lead.next_followup.followup_at)
+    if (Number.isNaN(followupDate.getTime())) return count
+
+    return followupDate < startOfToday ? count + 1 : count
+  }, 0)
+
+  const upcomingFollowups = leads.reduce((count: number, lead: any) => {
+    if (!isPendingFollowup(lead)) return count
+
+    const followupDate = new Date(lead.next_followup.followup_at)
+    if (Number.isNaN(followupDate.getTime())) return count
+
+    return followupDate >= startOfTomorrow && followupDate <= endOfUpcomingWindow
+      ? count + 1
+      : count
+  }, 0)
+
   return {
-    totalLeads,
-    pipelineValue,
-    wonRevenue,
+    totalAssignedLeads,
+    wonDeals,
     conversionRate,
     followupsDueToday,
-    leadsThisMonth,
+    overdueFollowups,
+    upcomingFollowups,
     stageCounts,
     leads,
   }

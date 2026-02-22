@@ -88,21 +88,24 @@ export function KanbanBoard({ initialLeads, stages }: BoardProps) {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-6 overflow-x-auto p-6 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[calc(100vh-250px)]">
-                {stages.map((stage) => (
-                    <Column
-                        key={stage.id}
-                        stage={stage}
-                        leads={leads.filter(
-                            (l) => l.status === stage.id
-                        )}
-                    />
-                ))}
+            <div className="overflow-x-auto pb-4">
+                <div className="flex gap-6 min-w-max">
+                    {stages.map((stage) => (
+                        <div key={stage.id} className="w-80 flex-shrink-0">
+                            <Column
+                                stage={stage}
+                                leads={leads.filter(
+                                    (l) => l.status === stage.id
+                                )}
+                            />
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <DragOverlay>
                 {activeLead ? (
-                    <div className="w-[320px] opacity-95 rotate-2">
+                    <div className="w-80 flex-shrink-0 opacity-95">
                         <Card lead={activeLead} />
                     </div>
                 ) : null}

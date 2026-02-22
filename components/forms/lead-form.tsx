@@ -53,6 +53,8 @@ export function LeadForm({
     resolver: zodResolver(leadSchema),
     defaultValues,
   })
+  const fieldClassName =
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 
   /* ===========================
      SUBMIT
@@ -137,18 +139,21 @@ export function LeadForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
+        className="bg-white border border-slate-200 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-8 space-y-6"
       >
         {/* BASIC INFO */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Lead Name *</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
+                  Lead Name
+                  <span className="text-red-500 ml-1">*</span>
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="Jane Doe" {...field} />
+                  <Input className={fieldClassName} placeholder="Jane Doe" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -160,9 +165,9 @@ export function LeadForm({
             name="company"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">Company</FormLabel>
                 <FormControl>
-                  <Input placeholder="Acme Corp" {...field} />
+                  <Input className={fieldClassName} placeholder="Acme Corp" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -174,9 +179,10 @@ export function LeadForm({
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">Email</FormLabel>
                 <FormControl>
                   <Input
+                    className={fieldClassName}
                     placeholder="jane@acme.com"
                     {...field}
                     value={field.value || ""}
@@ -192,9 +198,10 @@ export function LeadForm({
             name="phone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Phone</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">Phone</FormLabel>
                 <FormControl>
                   <Input
+                    className={fieldClassName}
                     placeholder="+1 555 000 0000"
                     {...field}
                     value={field.value || ""}
@@ -207,15 +214,16 @@ export function LeadForm({
         </div>
 
         {/* VALUE + STAGE */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="expected_value"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Expected Value ($)</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">Expected Value ($)</FormLabel>
                 <FormControl>
                   <Input
+                    className={fieldClassName}
                     type="number"
                     placeholder="0"
                     {...field}
@@ -234,11 +242,14 @@ export function LeadForm({
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Stage *</FormLabel>
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">
+                  Stage
+                  <span className="text-red-500 ml-1">*</span>
+                </FormLabel>
                 <FormControl>
                   <select
                     {...field}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className={fieldClassName}
                   >
                     {stages.map((stage) => (
                       <option
@@ -262,39 +273,42 @@ export function LeadForm({
           name="assigned_rep_id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Assign To Rep</FormLabel>
-              <FormControl>
-                <select
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(e.target.value || null)
-                  }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="">Unassigned</option>
-                  {reps.map((rep) => (
-                    <option
-                      key={rep.id}
-                      value={rep.id}
-                    >
-                      {rep.name || rep.email}
-                    </option>
-                  ))}
-                </select>
-              </FormControl>
-              <FormMessage />
+              <div className="md:col-span-2">
+                <FormLabel className="block text-sm font-medium text-slate-700 mb-1">Assign To Rep</FormLabel>
+                <FormControl>
+                  <select
+                    value={field.value ?? ""}
+                    onChange={(e) =>
+                      field.onChange(e.target.value || null)
+                    }
+                    className={fieldClassName}
+                  >
+                    <option value="">Unassigned</option>
+                    {reps.map((rep) => (
+                      <option
+                        key={rep.id}
+                        value={rep.id}
+                      >
+                        {rep.name || rep.email}
+                      </option>
+                    ))}
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </div>
             </FormItem>
           )}
         />
 
         {/* ACTION BUTTONS */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
           {initialData?.id && (
             <Button
               type="button"
               variant="destructive"
               onClick={handleDelete}
               disabled={deleting}
+              className="mr-auto"
             >
               {deleting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -303,25 +317,24 @@ export function LeadForm({
             </Button>
           )}
 
-          <div className="flex gap-4 ml-auto">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
+          <Button
+            type="button"
+            onClick={() => router.back()}
+            className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-md px-4 py-2 text-sm"
+          >
+            Cancel
+          </Button>
 
-            <Button
-              type="submit"
-              disabled={loading}
-            >
-              {loading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {initialData ? "Update Lead" : "Add Lead"}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="bg-blue-600 text-white hover:bg-blue-700 rounded-md px-4 py-2 text-sm font-medium"
+          >
+            {loading && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {initialData ? "Update Lead" : "Add Lead"}
+          </Button>
         </div>
       </form>
     </Form>
